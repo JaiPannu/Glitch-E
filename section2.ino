@@ -125,7 +125,7 @@ void loop() {
 // ================= PATH FOLLOWING =================
 void followPath() {
    if (redDetected()) {
-    sweepCount = 0;
+    sweepCount ^= sweepCount; // reset count to 0
     sweepDirection = -1;
     moveForward(20);
     return;
@@ -137,11 +137,11 @@ void followPath() {
     turnRight(sweepStep);
   }
 
-  sweepCount++;
+  ++sweepCount;
 
   if (sweepCount >= sweepLimit) {
-    sweepCount = 0;
-    sweepDirection *= -1;  // flip direction
+    sweepCount ^= sweepCount; // reset count to 0
+    sweepDirection = ~sweepDirection + 1;  // flip direction
   }
 
 }
