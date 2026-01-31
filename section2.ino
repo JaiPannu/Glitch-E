@@ -121,22 +121,22 @@ void followPath() {
   bool rightDetect = right < irThreshold;
   // Both sensors see the path → go straight
   if (left == LOW && right == LOW) {
-    moveForward();
+    moveForward(100);  // Move forward for 100ms
   }
 
   // Right sensor lost path → drifted right → turn left
   else if (left == LOW && right == HIGH) {
-    turnLeft();
+    turnLeft(100);  // Turn left for 100ms
   }
 
   // Left sensor lost path → drifted left → turn right
   else if (left == HIGH && right == LOW) {
-    turnRight();
+    turnRight(100);  // Turn right for 100ms
   }
 
   // Neither sensor sees path → stop (fail-safe)
   else {
-    stopMotors();
+    stopMotors(0);  // Stop immediately
   }
 
   /*
@@ -158,24 +158,16 @@ void followPath() {
 // ================= OBSTACLE AVOIDANCE =================
 void avoidObstacle() {
 
-  // Immediately stop to avoid collision
-  stopMotors();
-  delay(200);
+  stopMotors(200); // stop for 200 ms to avoid collision
 
-  // Turn left to avoid obstacle
-  turnLeft();
-  delay(400);
+  turnLeft(400); // turn left
 
-  moveForward();
-  delay(300);
+  moveForward(300); // move forward
 
-  turnRight();
-  delay(400);
+  turnRight(400); // turn right
 
-  moveForward();
-  delay(300);
+  moveForward(300); // bot should be clear, move forward
 
-  stopMotors();
 }
 
 
@@ -203,7 +195,10 @@ long readUltrasonic() {
 
 
 // ================= MOTOR CONTROL FUNCTIONS =================
-void moveForward() {
+// All movement functions now accept a duration parameter (in milliseconds)
+// This eliminates the need for delay() calls between movement commands
+
+void moveForward(int duration) {
 
   // Both motors forward
   digitalWrite(IN1, HIGH);
@@ -214,9 +209,13 @@ void moveForward() {
 
   analogWrite(ENA, baseSpeed);
   analogWrite(ENB, baseSpeed);
+
+  // Execute movement for specified duration
+  delay(duration);
+  stopMotors(0);
 }
 
-void moveBackward() {
+void moveBackward(int duration) {
 
   // Both motors backward
   digitalWrite(IN1, LOW);
@@ -227,28 +226,55 @@ void moveBackward() {
 
   analogWrite(ENA, baseSpeed);
   analogWrite(ENB, baseSpeed);
+
+  // Execute movement for specified duration
+  delay(duration);
+  stopMotors(0);
 }
 
-void turnLeft() {
+void turnLeft(int duration) {
 
   // Slow left motor, fast right motor
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
   analogWrite(ENA, turnSpeed);
   analogWrite(ENB, baseSpeed);
+
+  // Execute turn for specified duration
+  delay(duration);
+  stopMotors(0);
 }
 
-void turnRight() {
+void turnRight(int duration) {
 
   // Fast left motor, slow right motor
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
   analogWrite(ENA, baseSpeed);
   analogWrite(ENB, turnSpeed);
+
+  // Execute turn for specified duration
+  delay(duration);
+  stopMotors(0);
 }
 
-void stopMotors() {
+void stopMotors(int duration) {
 
   // Cut power to motors
   analogWrite(ENA, 0);
   analogWrite(ENB, 0);
-}
+
+  // If duration > 0, maintain stopped state for specified time
+  if (duration > 0) {
+    delay(duration);
+  }
+} 
 
 
 // ================= ARM & CLAW CONTROL =================
