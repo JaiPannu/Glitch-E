@@ -236,8 +236,9 @@ bool redDetected() {
 }
 
 // Read IR Right function
-void readIRRight(){
-  return
+bool readIRRight() {
+  int value = analogRead(IR_RIGHT);
+  return value < irThreshold;  // closer = smaller value
 }
 
 
