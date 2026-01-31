@@ -229,6 +229,11 @@ bool redDetected() {
   return false;
 }
 
+// Read IR Right function
+void readIRRight(){
+  return
+}
+
 
 // ================= MOTOR CONTROL FUNCTIONS =================
 // All movement functions now accept a duration parameter (in milliseconds)
