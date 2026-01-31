@@ -65,8 +65,8 @@ void setup() {
   clawServo.attach(CLAW_PIN);
 
   // Initial robot configuration
-  armUp();      // Lift arm so it doesn't drag
-  clawOpen();   // Open claw by default
+  //armUp();      // Lift arm so it doesn't drag
+  //clawOpen();   // Open claw by default
 }
 
 
@@ -147,18 +147,11 @@ void avoidObstacle() {
   turnLeft();
   delay(400);
 
-  /*
-    TODO:
-    This avoidance is VERY simple.
+  moveForward();
+  delay(300);
 
-    For better performance:
-    - Move forward a bit
-    - Turn back toward the path
-    - Resume line following
-
-    Eventually:
-    - Use color sensor to re-acquire RED line
-  */
+  turnRight();
+  delay(400);
 
   moveForward();
   delay(300);
