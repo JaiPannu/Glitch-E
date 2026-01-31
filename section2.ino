@@ -28,6 +28,14 @@ const int s2  = A2;
 const int s3  = A3;
 const int out = A4;
 
+
+// Sweep control variables
+int sweepStep = 8;          // ms per micro turn (tune 5–15)
+int sweepLimit = 6;         // how wide the sweep is
+int sweepDirection = -1;    // -1 = left, +1 = right
+int sweepCount = 0;
+
+
 // ================= SERVO MOTORS =================
 #include <Servo.h>
 Servo armServo;            // Controls arm up/down
@@ -116,49 +124,26 @@ void loop() {
 
 // ================= PATH FOLLOWING =================
 void followPath() {
-
-  // Read IR sensors
-  // LOW usually means "detecting surface"
-  // HIGH usually means "no surface"
-  /*
-  
-  int left = analogRead(IR_LEFT);
-  int right = analogRead(IR_RIGHT);
-  bool leftDetect = left < irThreshold;
-  bool rightDetect = right < irThreshold;
-  // Both sensors see the path → go straight
-  if (left == LOW && right == LOW) {
-    moveForward(100);  // Move forward for 100ms
+   if (redDetected()) {
+    sweepCount = 0;
+    sweepDirection = -1;
+    moveForward(20);
+    return;
   }
 
-  // Right sensor lost path → drifted right → turn left
-  else if (left == LOW && right == HIGH) {
-    turnLeft(100);  // Turn left for 100ms
+  if (sweepDirection == -1) {
+    turnLeft(sweepStep);
+  } else {
+    turnRight(sweepStep);
   }
 
-  // Left sensor lost path → drifted left → turn right
-  else if (left == HIGH && right == LOW) {
-    turnRight(100);  // Turn right for 100ms
+  sweepCount++;
+
+  if (sweepCount >= sweepLimit) {
+    sweepCount = 0;
+    sweepDirection *= -1;  // flip direction
   }
 
-  // Neither sensor sees path → stop (fail-safe)
-  else {
-    stopMotors(0);  // Stop immediately
-  }
-  */
-  /*
-    TODO (IMPORTANT):
-    This is where RED LINE FOLLOWING will go.
-
-    Replace or augment this logic with:
-    - color sensor reading
-    - detect RED intensity
-    - bias turning toward red line
-
-    Example strategy:
-    - If color sensor sees RED strongly → go forward
-    - If RED fades → sweep left/right until RED is found again
-  */
 }
 
 
