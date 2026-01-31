@@ -18,8 +18,8 @@ const int IR_RIGHT = A1;   // Right IR sensor
 
 // ================= ULTRASONIC SENSOR =================
 // Used for detecting obstacles in front of the robot
-const int TRIG_PIN = 2;    // Sends ultrasonic pulse
-const int ECHO_PIN = 3;    // Receives reflected pulse
+const int TRIG_PIN = 2;  //Fixed  // Sends ultrasonic pulse
+const int ECHO_PIN = 3;  //Fixed  // Receives reflected pulse
 
 // Color sensor TCS3200
 const int s0 = 1;
@@ -32,8 +32,8 @@ const int out = 13;
 #include <Servo.h>
 Servo armServo;            // Controls arm up/down
 Servo clawServo;           // Controls claw open/close
-const int ARM_PIN  = 12;
-const int CLAW_PIN = 13;
+const int ARM_PIN  = 10; // Fixed
+const int CLAW_PIN = 11; // Fixed
 
 // ================= MOVEMENT PARAMETERS =================
 // Base forward speed (tune for stability vs speed)
@@ -49,7 +49,7 @@ int irThreshold = 400; // determining when it is too left or too right
 
 // ================= SETUP =================
 void setup() {
-
+  Serial.begin(9600);
   // Motor pins set as outputs
   pinMode(ENA, OUTPUT);
   pinMode(IN1, OUTPUT);
@@ -74,7 +74,7 @@ void setup() {
   pinMode(s3,OUTPUT);
   pinMode(out,INPUT);
 
-  Serial.begin(9600);
+  
   digitalWrite(s0,HIGH);
   digitalWrite(s1,HIGH);
 
@@ -114,7 +114,8 @@ void followPath() {
   // Read IR sensors
   // LOW usually means "detecting surface"
   // HIGH usually means "no surface"
-
+  /*
+  
   int left = analogRead(IR_LEFT);
   int right = analogRead(IR_RIGHT);
   bool leftDetect = left < irThreshold;
@@ -138,7 +139,7 @@ void followPath() {
   else {
     stopMotors(0);  // Stop immediately
   }
-
+  */
   /*
     TODO (IMPORTANT):
     This is where RED LINE FOLLOWING will go.
@@ -162,11 +163,17 @@ void avoidObstacle() {
 
   turnLeft(400); // turn left
 
-  moveForward(300); // move forward
+  while(readIRRight()){
+    moveForward(2);
+  }
+  moveForward(50);
 
-  turnRight(400); // turn right
 
-  moveForward(300); // bot should be clear, move forward
+  //moveForward(300); // move forward
+
+  //turnRight(400); // turn right
+
+  //moveForward(300); // bot should be clear, move forward
 
 }
 
@@ -193,6 +200,28 @@ long readUltrasonic() {
   return duration * 0.034 / 2;
 }
 
+
+// ================= ULTRASONIC DISTANCE FUNCTION =================
+long readColor() {
+
+  // Ensure clean pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  // Send 10µs pulse
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Measure echo time (timeout = 25ms)
+  long duration = pulseIn(ECHO_PIN, HIGH, 25000);
+
+  // If no echo detected, return invalid distance
+  if (duration == 0) return -1;
+
+  // Convert time to distance in cm
+  return duration * 0.034 / 2;
+}
 
 // ================= MOTOR CONTROL FUNCTIONS =================
 // All movement functions now accept a duration parameter (in milliseconds)
