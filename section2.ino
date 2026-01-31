@@ -22,11 +22,11 @@ const int TRIG_PIN = 2;  //Fixed  // Sends ultrasonic pulse
 const int ECHO_PIN = 3;  //Fixed  // Receives reflected pulse
 
 // Color sensor TCS3200
-const int s0 = 1;
-const int s1 = 3;
-const int s2 = 7;
-const int s3 = 12;
-const int out = 13;
+const int s0  = 4;
+const int s1  = 7;
+const int s2  = A2;
+const int s3  = A3;
+const int out = A4;
 
 // ================= SERVO MOTORS =================
 #include <Servo.h>
@@ -173,16 +173,14 @@ void avoidObstacle() {
     moveForward(2);
   }
 
-  moveForward(50);
+  moveForward(100);
   turnRight(400);
 
-  
+  while(!(redDetected())){
+    moveForward(2);
+  }
 
-  //moveForward(300); // move forward
-
-  //turnRight(400); // turn right
-
-  //moveForward(300); // bot should be clear, move forward
+  turnLeft(400);
 
 }
 
@@ -210,27 +208,42 @@ long readUltrasonic() {
 }
 
 
-// ================= ULTRASONIC DISTANCE FUNCTION =================
-long readColor() {
-
-  // Ensure clean pulse
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
-
-  // Send 10µs pulse
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-
-  // Measure echo time (timeout = 25ms)
-  long duration = pulseIn(ECHO_PIN, HIGH, 25000);
-
-  // If no echo detected, return invalid distance
-  if (duration == 0) return -1;
-
-  // Convert time to distance in cm
-  return duration * 0.034 / 2;
+// ================= Color Sensing =================
+// Reads raw RED frequency (LOWER value = stronger red)
+unsigned long readRedRaw() {
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, LOW);
+  return pulseIn(out, LOW);
 }
+
+unsigned long readGreenRaw() {
+  digitalWrite(s2, HIGH);
+  digitalWrite(s3, HIGH);
+  return pulseIn(out, LOW);
+}
+
+unsigned long readBlueRaw() {
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, HIGH);
+  return pulseIn(out, LOW);
+}
+
+bool redDetected() {
+  unsigned long red   = readRedRaw();
+  unsigned long green = readGreenRaw();
+  unsigned long blue  = readBlueRaw();
+
+  // Debug (USE THIS DURING CALIBRATION)
+  Serial.print("R: "); Serial.print(red);
+  Serial.print(" G: "); Serial.print(green);
+  Serial.print(" B: "); Serial.println(blue);
+
+  if (red < green && red < blue && red < 200) {
+    return true;
+  }
+  return false;
+}
+
 
 // ================= MOTOR CONTROL FUNCTIONS =================
 // All movement functions now accept a duration parameter (in milliseconds)
