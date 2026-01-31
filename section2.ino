@@ -40,8 +40,8 @@ int sweepCount = 0;
 #include <Servo.h>
 Servo armServo;            // Controls arm up/down
 Servo clawServo;           // Controls claw open/close
-const int ARM_PIN  = 10; // Fixed
-const int CLAW_PIN = 11; // Fixed
+const int ARM_PIN  = 12; 
+const int CLAW_PIN = 13; 
 
 // ================= MOVEMENT PARAMETERS =================
 // Base forward speed (tune for stability vs speed)
@@ -125,7 +125,7 @@ void loop() {
 // ================= PATH FOLLOWING =================
 void followPath() {
    if (redDetected()) {
-    sweepCount ^= sweepCount; // reset count to 0
+    sweepCount = 0;
     sweepDirection = -1;
     moveForward(20);
     return;
@@ -137,11 +137,11 @@ void followPath() {
     turnRight(sweepStep);
   }
 
-  ++sweepCount;
+  sweepCount++;
 
   if (sweepCount >= sweepLimit) {
-    sweepCount ^= sweepCount; // reset count to 0
-    sweepDirection = ~sweepDirection + 1;  // flip direction
+    sweepCount = 0;
+    sweepDirection *= -1;  // flip direction
   }
 
 }
@@ -236,9 +236,8 @@ bool redDetected() {
 }
 
 // Read IR Right function
-bool readIRRight() {
-  int value = analogRead(IR_RIGHT);
-  return value < irThreshold;  // closer = smaller value
+void readIRRight(){
+  return
 }
 
 
