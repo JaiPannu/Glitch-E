@@ -6,3 +6,5 @@ __pycache__/
 hackathon-wallet.json
 *.json
 !package.json
+
+.venv
