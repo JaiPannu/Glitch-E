@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+
+.vscode/
+
+hackathon-wallet.json
+*.json
+!package.json   # (Exception if you have a JS frontend later)
