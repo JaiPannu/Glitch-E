@@ -182,6 +182,7 @@ String detectColour() {
 // ================= THE "BIATHLON" SHOT =================
 void shootBall() {
   // First, move forward until black is detected (on the ramp)
+  armDown();    // Lower arm to avoid interference
   while (detectColour() != "black") {
     moveForward(cruiseSpeed);
     delay(50);  // Small delay for sensor reading
@@ -191,18 +192,13 @@ void shootBall() {
   delay(300);  // Stabilize on the ramp
 
   // Now proceed with the shot sequence
-  // move forward exactly 26 cm (do calcs later)
+  
+  // The "Bump": Move forward at cruise speed to roll the ball
   moveForward(cruiseSpeed);
-  delay(800); // CHANGE TS
+  delay(800);     // Adjust this duration based on how far you want to roll it
+
+  // Stop
   stopMotors();
-
-  // place ball down
-  armDown();
-  clawOpen();
-
-  // go back just cuz yea
-  moveBackward(cruiseSpeed);
-  delay(800); // CHANGE TS (optional)
 
 }
 
