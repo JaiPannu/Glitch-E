@@ -206,7 +206,7 @@ void avoidObstacle() {
   while(readIRRight()){
     moveForward(2);
   }
-
+ 
   moveForward(100);
   turnRight(400);
 
