@@ -1,78 +1,73 @@
 import serial
 import time
-from solders.keypair import Keypair
-from solders.pubkey import Pubkey
-from solders.system_program import TransferParams, transfer
-from solana.rpc.api import Client
-from solana.transaction import Transaction
-from solders.instruction import Instruction
-import qrcode
 import json
+import os
+from solders.keypair import Keypair
+from solana.rpc.api import Client
+from solders.pubkey import Pubkey
 
-# ================= CONFIGURATION =================
-ARDUINO_PORT = "COM3"  # CHANGE THIS to your Arduino Port
-BAUD_RATE = 9600
-WALLET_PATH = "hackathon-wallet.json" # Path to the file you generated in Phase 1
+# --- CONFIG ---
+ARDUINO_PORT = "COM3" # CHECK THIS! (e.g., /dev/ttyUSB0 on Linux)
+BAUD_RATE = 115200    # Must match Arduino
+STATE_FILE = "race_state.json"
+WALLET_PATH = "hackathon-wallet.json"
 
-# Solana Setup (Devnet)
-client = Client("https://api.devnet.solana.com")
+# --- INIT ---
+print(f"🚀 Bridge Starting on {ARDUINO_PORT}...")
 
-# Load Keypair
-with open(WALLET_PATH, 'r') as f:
-    key_data = json.load(f)
-sender = Keypair.from_bytes(key_data)
+# Reset State File
+initial_state = {"status": "WAITING", "time": 0, "score": 0, "log": []}
+with open(STATE_FILE, 'w') as f:
+    json.dump(initial_state, f)
 
-print(f"✅ Bridge Loaded. Wallet: {sender.pubkey()}")
-print(f"📡 Listening on {ARDUINO_PORT}...")
+try:
+    ser = serial.Serial(ARDUINO_PORT, BAUD_RATE, timeout=1)
+except:
+    print("❌ ERROR: Arduino not found. Is it plugged in?")
+    # We continue just to let you test the UI without crashing
+    ser = None 
 
-def send_to_blockchain(score, duration):
-    print(f"\n[EVENT] Robot finished! Score: {score}, Time: {duration}ms")
-    print("       Minting Proof of Run...")
+def update_ui(status, time_val, score_val, log_msg=None):
+    """Writes the latest robot state to JSON for Streamlit"""
+    data = {
+        "status": status,
+        "time": time_val,
+        "score": score_val,
+        "last_update": time.time()
+    }
+    with open(STATE_FILE, 'w') as f:
+        json.dump(data, f)
+    if log_msg:
+        print(f"[{status}] {log_msg}")
 
-    # We use the "Memo" program to attach text to a transaction
-    # This writes the score permanently onto the chain
-    memo_program_id = Pubkey.from_string("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcQb")
-    memo_text = f"UTRA HACKS 2026 | TEAM BIATHLON | SCORE: {score} | TIME: {duration}ms".encode("utf-8")
-
-    # Create Transaction Instruction
-    memo_ix = Instruction(
-        program_id=memo_program_id,
-        accounts=[],
-        data=memo_text
-    )
-
-    # Build the Transaction
-    # We send 0 SOL to ourselves just to carry the memo
-    txn = Transaction().add(memo_ix)
-    
-    # Send and Confirm
-    try:
-        result = client.send_transaction(txn, sender)
-        signature = result.value
-        
-        print("       ✅ SUCCESS! Transaction Confirmed.")
-        print(f"       Signature: {signature}")
-        
-        # Generate QR Code for Judges
-        explorer_url = f"https://explorer.solana.com/tx/{signature}?cluster=devnet"
-        qr = qrcode.QRCode()
-        qr.add_data(explorer_url)
-        qr.print_ascii()
-        print(f"\n🔗 VERIFY HERE: {explorer_url}")
-        
-    except Exception as e:
-        print(f"       ❌ ERROR: {e}")
-
-# Main Listener Loop
-ser = serial.Serial(ARDUINO_PORT, BAUD_RATE)
+# --- MAIN LOOP ---
 while True:
-    if ser.in_waiting > 0:
-        line = ser.readline().decode('utf-8').strip()
-        
-        if line.startswith("SOLANA_RECORD:"):
-            # Parse the data: "SOLANA_RECORD:50:45000"
-            parts = line.split(":")
-            score = parts[1]
-            time_ms = parts[2]
+    if ser and ser.in_waiting > 0:
+        try:
+            line = ser.readline().decode('utf-8').strip()
             
-            send_to_blockchain(score, time_ms)
+            # CASE 1: Telemetry Stream (LOG:1200,50,50,12,0)
+            if line.startswith("LOG:"):
+                parts = line.split(",")
+                # Format: LOG:TIME,L_TICKS,R_TICKS,DIST,PWM
+                run_time = int(parts[0]) / 1000.0
+                dist = parts[3]
+                update_ui("RACING", run_time, 0) # Score is 0 until finish
+
+            # CASE 2: Finish Line (SOLANA_RECORD:50:45000)
+            elif line.startswith("SOLANA_RECORD:"):
+                parts = line.split(":")
+                score = int(parts[1])
+                final_time = int(parts[2])
+                
+                print("🏆 FINISH LINE DETECTED!")
+                update_ui("FINISHED", final_time, score)
+                
+                # HERE: Add your Solana transaction code from before!
+                # send_to_blockchain(score, final_time)
+
+        except Exception as e:
+            print(f"Error parsing: {e}")
+            
+    # Small sleep to save CPU
+    time.sleep(0.05)
