@@ -8,3 +8,12 @@ hackathon-wallet.json
 !package.json
 
 .venv
+
+COMPLETION_SUMMARY.txt
+CONVERSION_SUMMARY.md
+DESIGN_OVERVIEW.md
+FILE_STRUCTURE.md
+FILES_CREATED.md
+INDEX.md
+QUICK_REFERENCE.md
+QUICK_START.md

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="race-status">
+            <h2>Current Race Status</h2>
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="status-label">Status</span>
+                    <span class="status-value" id="robot-status">{{ state.status }}</span>
+                </div>
+                <div class="status-card">
+                    <span class="status-label">Race Timer</span>
+                    <span class="status-value timer" id="race-timer">{{ state.time }}s</span>
+                </div>
+                <div class="status-card">
+                    <span class="status-label">Score</span>
+                    <span class="status-value" id="race-score">{{ state.score }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Markets Section -->
+    <div class="markets-section">
+        <div class="markets-grid">
+            <!-- Market Card 1: Will Robot Succeed? -->
+            <div class="market-card">
+                <div class="market-header">
+                    <h3>Will the Robot Finish Successfully?</h3>
+                    <span class="market-time">Live</span>
+                </div>
+
+                <div class="market-content">
+                    <!-- Prediction Chart -->
+                    <div class="chart-container">
+                        <canvas id="marketChart"></canvas>
+                    </div>
+
+                    <!-- Market Stats -->
+                    <div class="market-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Volume</span>
+                            <span class="stat-value" id="total-volume">$0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Traders</span>
+                            <span class="stat-value" id="participant-count">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Betting Options -->
+                    <div class="betting-options">
+                        <!-- YES Position -->
+                        <div class="bet-option success-option">
+                            <div class="option-header">
+                                <h4>YES - Robot Succeeds</h4>
+                                <span class="odds-badge" id="success-odds">50%</span>
+                            </div>
+                            <p class="option-description">Finish in &lt;45 seconds</p>
+                            <div class="bet-input-group">
+                                <input type="number" id="success-amount" class="bet-input" placeholder="Enter amount" min="1" step="10">
+                                <button class="bet-btn success-btn" onclick="placeBet('SUCCESS')">Bet YES</button>
+                            </div>
+                            <div class="volume-display">
+                                <small id="success-volume">Pool: $0</small>
+                            </div>
+                        </div>
+
+                        <!-- NO Position -->
+                        <div class="bet-option fail-option">
+                            <div class="option-header">
+                                <h4>NO - Robot Fails</h4>
+                                <span class="odds-badge" id="fail-odds">50%</span>
+                            </div>
+                            <p class="option-description">Crashes or takes &gt;45 seconds</p>
+                            <div class="bet-input-group">
+                                <input type="number" id="fail-amount" class="bet-input" placeholder="Enter amount" min="1" step="10">
+                                <button class="bet-btn fail-btn" onclick="placeBet('FAIL')">Bet NO</button>
+                            </div>
+                            <div class="volume-display">
+                                <small id="fail-volume">Pool: $0</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="market-footer">
+                    <small>Resolves when race completes</small>
+                </div>
+            </div>
+
+            <!-- Market Card 2: Volume Over Time -->
+            <div class="market-card">
+                <div class="market-header">
+                    <h3>Betting Volume Timeline</h3>
+                </div>
+                <div class="market-content">
+                    <div class="chart-container">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Positions Section -->
+    <div class="positions-section">
+        <h2>Your Active Positions</h2>
+        <div class="positions-table">
+            {% if user_positions %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Amount</th>
+                            <th>Placed At</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pos in user_positions %}
+                        <tr>
+                            <td>
+                                <span class="badge {% if pos.position == 'SUCCESS' %}success-badge{% else %}fail-badge{% endif %}">
+                                    {{ pos.position }}
+                                </span>
+                            </td>
+                            <td>${{ pos.amount }}</td>
+                            <td>{{ pos.timestamp[:10] }}</td>
+                            <td><span class="status-open">{{ pos.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <p>No active positions. Place a bet to get started!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store initial market data
+    const initialMarketData = {
+        success_odds: {{ market_data.success_odds }},
+        fail_odds: {{ market_data.fail_odds }},
+        success_volume: {{ market_data.success_volume }},
+        fail_volume: {{ market_data.fail_volume }},
+        total_volume: {{ market_data.total_volume }},
+        participants: {{ market_data.participants }}
+    };
+
+    // Initialize charts and polling
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeMarketChart();
+        initializeVolumeChart();
+        updateUserBalance();
+        pollMarketData();
+        
+        // Poll every 2 seconds
+        setInterval(pollMarketData, 2000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="history-container">
+    <div class="history-header">
+        <h1>Betting History</h1>
+        <p class="subtitle">Track your positions and past bets</p>
+    </div>
+
+    {% if positions %}
+    <div class="history-table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Position</th>
+                    <th>Amount Wagered</th>
+                    <th>Status</th>
+                    <th>Potential Payout</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pos in positions %}
+                <tr class="{% if pos.status == 'WON' %}won-row{% elif pos.status == 'LOST' %}lost-row{% else %}open-row{% endif %}">
+                    <td>{{ pos.timestamp[:10] }}</td>
+                    <td>
+                        <span class="badge {% if pos.position == 'SUCCESS' %}success-badge{% else %}fail-badge{% endif %}">
+                            {{ pos.position }}
+                        </span>
+                    </td>
+                    <td>${{ pos.amount }}</td>
+                    <td>
+                        {% if pos.status == 'OPEN' %}
+                            <span class="status-badge open">Open</span>
+                        {% elif pos.status == 'WON' %}
+                            <span class="status-badge won">Won ✓</span>
+                        {% else %}
+                            <span class="status-badge lost">Lost ✗</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pos.status == 'OPEN' %}
+                            <span class="pending">Pending</span>
+                        {% else %}
+                            ${{ (pos.amount * 2)|int }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No betting history yet</h3>
+        <p>Start placing bets on robot races to see your history here</p>
+        <a href="/" class="btn btn-primary">Go to Markets</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
