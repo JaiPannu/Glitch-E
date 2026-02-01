@@ -31,6 +31,11 @@ Servo clawServo;
 const int ARM_PIN  = 12;
 const int CLAW_PIN = 13;
 
+// ================= BLOCKCHAIN PARAMETERS =================
+#include <RobotTelemetry.h>
+const bool DEBUG_MODE = true;          // Enable telemetry logging
+const unsigned long TELEMETRY_RATE = 1000; // Log every 1000 ms
+
 // ================= SECTION 1 PARAMETERS =================
 
 // State tracking
@@ -111,6 +116,10 @@ void loop() {
   // Update last detected color
   if (currentColor != "null") {
     lastDetectedColor = currentColor;
+  }
+
+  if (DEBUG_MODE) {
+    logTelemetry(); // Log telemetry data
   }
 }
 

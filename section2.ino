@@ -39,6 +39,11 @@ Servo clawServo;           // Controls claw open/close
 const int ARM_PIN  = 12; 
 const int CLAW_PIN = 13; 
 
+// ================ TELEMETRY PARAMETERS ================
+#include <RobotTelemetry.h>
+const bool DEBUG_MODE = true;          // Enable telemetry logging
+const unsigned long TELEMETRY_RATE = 1000; // Log every 1000 ms
+
 // ================= MOVEMENT PARAMETERS =================
 
 // Distance threshold (cm) to trigger obstacle avoidance
@@ -107,6 +112,9 @@ void loop() {
     followPath();
   }
 
+  if (DEBUG_MODE) {
+    logTelemetry(); // Log telemetry data
+  }
 }
 
 // ====================== BALL PICKUP/DROP =================
